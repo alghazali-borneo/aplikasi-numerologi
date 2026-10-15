@@ -228,7 +228,24 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal'); 
   const [selectedMemberIdx, setSelectedMemberIdx] = useState(0);
-
+// Deteksi jika pembeli kembali dari halaman Mayar setelah bayar
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      const saved = localStorage.getItem('peta_diri_members');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setMembers(parsed);
+          setCoreData(parsed.map(m => calculateCoreNumbers(m)));
+          setStep('paidResult'); // Buka akses laporan lengkap secara otomatis
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+  
   const addMember = (roleType) => setMembers([...members, { id: Date.now().toString(), role: roleType, name: '', dob: '', phone: '' }]);
   const removeMember = (id) => setMembers(members.filter(m => m.id !== id));
   const handleMemberChange = (id, field, value) => setMembers(members.map(m => m.id === id ? { ...m, [field]: value } : m));
@@ -244,10 +261,13 @@ export default function App() {
     }, 1200);
   };
 
-  const handlePaymentMock = () => {
-    setIsProcessing(true);
-    setTimeout(() => { setStep('paidResult'); setIsProcessing(false); }, 1500);
-  };
+  const handlePayment = () => {
+  // Simpan data kalkulasi ke penyimpanan browser agar tidak hilang saat dialihkan
+  localStorage.setItem('peta_diri_members', JSON.stringify(members));
+
+  // Arahkan pengunjung langsung ke halaman pembayaran Mayar Anda
+  window.location.href = "https://digitalbiz.myr.id/pl/laporan-lengkap-peta-diri";
+};
 
   const familyBlueprint = useMemo(() => {
     if (coreData.length < 2) return null;
@@ -383,8 +403,8 @@ export default function App() {
                 <p className="text-indigo-200 mb-10 max-w-xl mx-auto leading-relaxed relative z-10 text-lg">
                   Ketahui narasi psikologis lengkap Anda, bongkar tingkat kecocokan asmara dengan persentase akurat, dan pelajari cara terbaik membimbing keluarga berdasarkan energi batin mereka.
                 </p>
-                <button onClick={handlePaymentMock} disabled={isProcessing} className="relative z-10 bg-white text-indigo-950 text-lg font-black tracking-wide px-12 py-5 rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 transition-all">
-                  {isProcessing ? "Membuka Segel..." : "BUKA AKSES PREMIUM - Rp 149.000"}
+                <button onClick={handlePayment} className="relative z-10 bg-white text-indigo-950 text-lg font-black tracking-wide px-12 py-5 rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 transition-all">
+                BUKA AKSES PREMIUM - Rp 99.000
                 </button>
               </div>
             </motion.div>
